@@ -40,9 +40,9 @@ initialize = function () {
         case "View All Employee Data":
           viewEmployees();
           break;
-        // case "Add an Employee":
-        //   addEmployee();
-        //   break;
+        case "Add an Employee":
+          addEmployee();
+          break;
         // case "Update Employee Roles":
         //   updateEmployeeRole();
         //   break;
@@ -67,7 +67,7 @@ initialize = function () {
 
 viewEmployees = function () {
   connection.query(
-    `SELECT first_name,last_name,title,salary
+    `SELECT first_name,last_name,title,salary,first_name,last_name
         FROM employee
         RIGHT JOIN role ON employee.role_id = role.id
         RIGHT JOIN department ON role.department_id = department.id
@@ -80,7 +80,96 @@ viewEmployees = function () {
   );
 };
 
-addEmployee = function () {};
+addEmployee = function () {
+  // Create role array for inquirer
+  let roleList = [];
+  connection.query(`SELECT title FROM role`, function (err, res) {
+    if (err) throw err;
+    for (i = 0; i < res.length; i++) {
+      roleList.push(res[i].title);
+    }
+  });
+  // Create employee array for inquirer
+  let bossList = [];
+  connection.query(`SELECT first_name, last_name FROM employee`, function (
+    err,
+    res
+  ) {
+    if (err) throw err;
+    for (i = 0; i < res.length; i++) {
+      bossList.push(res[i].first_name + " " + res[i].last_name);
+    }
+    bossList.push("N/A");
+  });
+  // Ask user for new employee first name, last name, and role
+  inquirer
+    .prompt([
+      {
+        name: "first_name",
+        type: "text",
+        message: "What is this employee's first name?",
+      },
+      {
+        name: "last_name",
+        type: "text",
+        message: "What is this employee's last name?",
+      },
+      {
+        name: "role",
+        type: "list",
+        message: "What is this employee's role?",
+        choices: roleList,
+      },
+      {
+        name: "manager",
+        type: "list",
+        message: "Who is this employee's manager?",
+        choices: bossList,
+      },
+    ])
+    .then(function (result) {
+      // split result.manager into first and last name
+      let managerArr = result.manager.split(" ");
+      let managerFirstName = managerArr[0];
+      let managerLastName = managerArr[1];
+      connection.query(
+        //   Searching for the role id.
+        `SELECT id FROM role WHERE ?`,
+        {
+          title: result.role,
+        },
+        function (err, res) {
+          if (err) throw err;
+          //   Set the department ID in empty variable.
+          roleID = res[0].id;
+          // Search for the manager employee id.
+          connection.query(
+            `SELECT id FROM employee WHERE first_name = "${managerFirstName}" AND last_name = "${managerLastName}"`,
+            function (err, output) {
+                if (err) throw err;
+                managerID = output[0].id;
+              //   Output full new employee to the database
+              connection.query(
+                `INSERT INTO employee SET ?`,
+                {
+                  first_name: result.first_name,
+                  last_name: result.last_name,
+                  role_id: roleID,
+                  manager_id: managerID
+                },
+                function (err, res) {
+                  if (err) throw err;
+                  console.log(result.first_name + " " + result.last_name + " added!");
+                  //   Restart program
+                  initialize();
+                }
+              );
+            }
+          );
+        }
+      );
+    });
+};
 
 updateEmployeeRole = function () {};
 
