@@ -46,15 +46,15 @@ initialize = function () {
         // case "Update Employee Roles":
         //   updateEmployeeRole();
         //   break;
-        // case "View All Roles":
-        //   viewRoles();
-        //   break;
+        case "View All Roles":
+          viewRoles();
+          break;
         // case "Add a Role":
         //   addRole();
         //   break;
-        // case "View All Departments":
-        //   viewDepartments();
-        //   break;
+        case "View All Departments":
+          viewDepartments();
+          break;
         case "Add a Department":
           addDepartment();
           break;
@@ -84,11 +84,31 @@ addEmployee = function () {};
 
 updateEmployeeRole = function () {};
 
-viewRole = function () {};
+viewRoles = function () {
+    connection.query(
+        `SELECT title, salary, name 
+        FROM role
+        LEFT JOIN department ON role.department_id = department.id`,
+        function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            initialize();
+        }
+    )
+};
 
 addRole = function () {};
 
-viewDepartments = function () {};
+viewDepartments = function () {
+    connection.query(
+        `SELECT * FROM department`,
+        function(err, res) {
+            if (err) throw err;
+            console.table(res);
+            initialize();
+        }
+    )
+};
 
 addDepartment = function () {
     inquirer.prompt([
