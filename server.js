@@ -55,10 +55,10 @@ initialize = function () {
         // case "View All Departments":
         //   viewDepartments();
         //   break;
-        // case "Add a Department":
-        //   addDepartment();
-        //   break;
-        case "Exit":
+        case "Add a Department":
+          addDepartment();
+          break;
+        case "EXIT":
           connection.end();
           break;
       }
@@ -90,4 +90,24 @@ addRole = function () {};
 
 viewDepartments = function () {};
 
-addDepartment = function () {};
+addDepartment = function () {
+    inquirer.prompt([
+        {
+            name: "department",
+            type: "text",
+            message: "What is the name of this department?"
+        }
+    ]).then((result) => {
+        connection.query(
+            `INSERT INTO department SET ?`,
+            {
+                name: result.department
+            },
+            function(err, res) {
+                if (err) throw err;
+                console.log(result.department + " department added!");
+                initialize();
+            }
+        )
+    })
+};
