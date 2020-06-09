@@ -67,15 +67,30 @@ initialize = function () {
 
 viewEmployees = function () {
   connection.query(
-    `SELECT first_name,last_name,title,salary,first_name,last_name
-        FROM employee
-        RIGHT JOIN role ON employee.role_id = role.id
-        RIGHT JOIN department ON role.department_id = department.id
-        `,
-    function (err, res) {
+    `SELECT first_name AS "First Name", last_name AS "Last Name", title, salary, name
+    FROM employee
+    INNER JOIN role ON employee.role_id = role.id
+    INNER JOIN department ON role.department_id = department.id
+    WHERE manager_id IS NULL
+    `,
+    function (err, result) {
       if (err) throw err;
-      console.table(res);
-      initialize();
+      console.log("UPPER MANAGEMENT");
+      console.table(result);
+      connection.query(
+        `SELECT A.first_name As "First Name", A.last_name AS "Last Name", title, salary, name, CONCAT(B.first_name, " ", B.last_name) AS "Manager"
+              FROM employee A, employee B
+              INNER JOIN role ON B.role_id = role.id
+              INNER JOIN department ON role.department_id = department.id
+              WHERE A.manager_id = B.id
+              `,
+        function (err, res) {
+          if (err) throw err;
+          console.log("EMPLOYEES");
+          console.table(res);
+          initialize();
+        }
+      );
     }
   );
 };
