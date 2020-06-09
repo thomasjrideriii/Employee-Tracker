@@ -43,9 +43,9 @@ initialize = function () {
         case "Add an Employee":
           addEmployee();
           break;
-        // case "Update Employee Roles":
-        //   updateEmployeeRole();
-        //   break;
+        case "Update Employee Roles":
+          updateEmployeeRole();
+          break;
         case "View All Roles":
           viewRoles();
           break;
@@ -146,8 +146,8 @@ addEmployee = function () {
           connection.query(
             `SELECT id FROM employee WHERE first_name = "${managerFirstName}" AND last_name = "${managerLastName}"`,
             function (err, output) {
-                if (err) throw err;
-                managerID = output[0].id;
+              if (err) throw err;
+              managerID = output[0].id;
               //   Output full new employee to the database
               connection.query(
                 `INSERT INTO employee SET ?`,
@@ -155,11 +155,13 @@ addEmployee = function () {
                   first_name: result.first_name,
                   last_name: result.last_name,
                   role_id: roleID,
-                  manager_id: managerID
+                  manager_id: managerID,
                 },
                 function (err, res) {
                   if (err) throw err;
-                  console.log(result.first_name + " " + result.last_name + " added!");
+                  console.log(
+                    result.first_name + " " + result.last_name + " added!"
+                  );
                   //   Restart program
                   initialize();
                 }
@@ -171,7 +173,66 @@ addEmployee = function () {
     });
 };
 
-updateEmployeeRole = function () {};
+updateEmployeeRole = function () {
+  // Create employee array for inquirer
+  let employeeList = [];
+  connection.query(`SELECT first_name, last_name FROM employee`, function (
+    err,
+    res
+  ) {
+    if (err) throw err;
+    for (i = 0; i < res.length; i++) {
+      employeeList.push(res[i].first_name + " " + res[i].last_name);
+    }
+    //   Create role array for inquirer
+    let roleList = [];
+    connection.query(`SELECT title FROM role`, function (err, res) {
+      if (err) throw err;
+      for (i = 0; i < res.length; i++) {
+        roleList.push(res[i].title);
+      }
+      //   Prompt user on the employee and the requested change.
+      inquirer
+        .prompt([
+          {
+            name: "employee",
+            type: "list",
+            message: "Which employee would you like to update?",
+            choices: employeeList,
+          },
+          {
+            name: "role",
+            type: "list",
+            message: "What would you like to change their role to?",
+            choices: roleList,
+          },
+        ])
+        .then(function (result) {
+          // Parse employee name
+          let nameArr = result.employee.split(" ");
+          let employeeFirstName = nameArr[0];
+          let employeeLastName = nameArr[1];
+
+          // Find role id
+          connection.query(
+            `SELECT id FROM role WHERE title = "${result.role}"`,
+            function (err, res) {
+              if (err) throw err;
+              let roleID = res[0].id;
+              connection.query(
+                `Update employee SET role_id = "${roleID}" WHERE first_name = "${employeeFirstName}" AND last_name = "${employeeLastName}"`,
+                function (err, output) {
+                  if (err) throw err;
+                  console.log(result.employee + " updated!");
+                  initialize();
+                }
+              );
+            }
+          );
+        });
+    });
+  });
+};
 
 viewRoles = function () {
   connection.query(
